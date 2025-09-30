@@ -33,11 +33,12 @@ def test_schema_valid_payload():
 
 def test_schema_rejects_past_date():
     yesterday = date.today() - timedelta(days=1)
+    year = datetime.now().year
     with pytest.raises(ValueError):
         AppointmentCreate(
-            doctor_id="DOC-1",
-            patient_id="PAT-1",
-            facility_id="FAC-1",
+            doctor_id=f"DOC-{year}-0001",
+            patient_id=f"PAT-{year}-0001",
+            facility_id=f"FAC-{year}-0001",
             doctor_name="Dr. Valid",
             patient_name="Patient Valid",
             appointment_date=yesterday,
@@ -49,11 +50,12 @@ def test_schema_rejects_past_date():
 
 def test_schema_rejects_end_before_start():
     today = date.today()
+    year = datetime.now().year
     with pytest.raises(ValueError):
         AppointmentCreate(
-            doctor_id="DOC-1",
-            patient_id="PAT-1",
-            facility_id="FAC-1",
+            doctor_id=f"DOC-{year}-0001",
+            patient_id=f"PAT-{year}-0001",
+            facility_id=f"FAC-{year}-0001",
             doctor_name="Dr. Valid",
             patient_name="Patient Valid",
             appointment_date=today,
@@ -65,11 +67,12 @@ def test_schema_rejects_end_before_start():
 
 def test_schema_rejects_empty_names():
     today = date.today()
+    year = datetime.now().year
     with pytest.raises(ValueError):
         AppointmentCreate(
-            doctor_id="DOC-1",
-            patient_id="PAT-1",
-            facility_id="FAC-1",
+            doctor_id=f"DOC-{year}-0001",
+            patient_id=f"PAT-{year}-0001",
+            facility_id=f"FAC-{year}-0001",
             doctor_name="   ",
             patient_name="Patient Valid",
             appointment_date=today,

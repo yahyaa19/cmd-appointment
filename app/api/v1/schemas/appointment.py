@@ -39,15 +39,11 @@ class AppointmentBase(BaseModel):
     @field_validator('appointment_date', mode='before')
     @classmethod
     def validate_future_date(cls, v: date) -> date:
-        # Only validate for new appointments (when creating/updating)
-        # Skip validation for responses to allow past dates
         from datetime import date as dt_date
         if isinstance(v, str):
             v = date.fromisoformat(v)
         if v < dt_date.today():
-            # For now, we'll allow past dates for existing appointments
-            # Remove this if you want to enforce future dates
-            pass
+            raise ValueError('Appointment date cannot be in the past')
         return v
     
     @field_validator('appointment_end_time')
@@ -101,6 +97,27 @@ class AppointmentUpdate(BaseModel):
     appointment_end_time: Optional[time] = None
     purpose_of_visit: Optional[str] = None
     description: Optional[str] = None
+    
+    @field_validator('appointment_date', mode='before')
+    @classmethod
+    def validate_future_date(cls, v: date) -> date:
+        if v is None:
+            return v
+        from datetime import date as dt_date
+        if isinstance(v, str):
+            v = date.fromisoformat(v)
+        if v < dt_date.today():
+            raise ValueError('Appointment date cannot be in the past')
+        return v
+    
+    @field_validator('doctor_name', 'patient_name')
+    @classmethod
+    def validate_names(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not v.strip():
+            raise ValueError('Name cannot be empty')
+        return v.strip()
 
 class AppointmentStatusUpdate(BaseModel):
     status: AppointmentStatus
