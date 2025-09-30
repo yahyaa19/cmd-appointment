@@ -150,61 +150,51 @@ pipeline {
     //   }
     // }
 
-    stage('Unit Tests') {
-      steps {
-        script {
-          bat """
-            ${PYTHON} -m pytest tests/unit \
-              --cov=app \
-              --cov-report=xml:coverage.xml \
-              --cov-report=term \
-              --cov-report=html
-              -v \
-              --junitxml=test-results/unit-tests.xml
-          """
-        }
-      }
-      post {
-        always {
-          junit 'test-results/unit-tests.xml'
-          publishHTML(target: [
-            allowMissing: false,
-            alwaysLinkToLastBuild: false,
-            keepAll: true,
-            reportDir: 'htmlcov',
-            reportFiles: 'index.html',
-            reportName: 'Coverage Report'
-          ])
-        }
-      }
-    }
-
-    stage('Integration Tests') {
-      environment {
-        MYSQL_ROOT_PASSWORD = 'rootsecret'
-        MYSQL_DATABASE = 'appointment_test_db'
-        MYSQL_USER = 'appuser'
-        MYSQL_PASSWORD = 'appsecret'
+    stage('Testing') {
+       environment {
+         // These variables are picked up by docker-compose.test.yml to configure the MySQL test database.
+         // Replace 'rootsecret', 'appuser', 'appsecret' with values from your .env or Jenkins credentials if you changed them.
+         MYSQL_ROOT_PASSWORD = 'rootsecret'
+         MYSQL_DATABASE = 'appointment_test_db' // Ensure this matches the DB name in docker-compose.test.yml
+         MYSQL_USER = 'appuser'
+         MYSQL_PASSWORD = 'appsecret'
+        // The DATABASE_URL for tests connecting from inside the 'test' service to the 'mysql' service
         TEST_DATABASE_URL = 'mysql+pymysql://appuser:appsecret@mysql:3306/appointment_test_db?charset=utf8mb4'
       }
-      steps {
-        script {
+       steps {
+         script {
+          echo 'Starting Dockerized test environment...'
           bat 'docker-compose -f docker-compose.test.yml up -d --build --wait'
-          // Ensure DATABASE_URL is set for tests against MySQL
-          withEnv(['TEST_DATABASE_URL=mysql+pymysql://appuser:appsecret@localhost:3306/appointment_test_db?charset=utf8mb4']) {
-            bat "${PYTHON} -m pytest tests/integration \
-              -v \
-              --junitxml=test-results/integration-tests.xml"
-          }
-        }
-      }
-      post {
-        always {
+
+          echo 'Running all unit and integration tests...'
+          // The DATABASE_URL for pytest itself is now taken from the stage environment
+           bat """
+            ${PYTHON} -m pytest tests/ \
+               --cov=app \
+               --cov-report=xml:coverage.xml \
+               --cov-report=term \
+               -v \
+              --junitxml=test-results/all-tests.xml
+              --ignore=tests/performance \
+              --ignore=tests/security
+           """
+         }
+       }
+       post {
+         always {
           bat 'docker-compose -f docker-compose.test.yml down --volumes --remove-orphans'
-          junit 'test-results/integration-tests.xml'
-        }
-      }
-    }
+           junit 'test-results/all-tests.xml'
+           publishHTML(target: [
+             allowMissing: false,
+             alwaysLinkToLastBuild: false,
+             keepAll: true,
+             reportDir: 'htmlcov',
+             reportFiles: 'index.html',
+             reportName: 'Combined Coverage Report'
+           ])
+         }
+       }
+     }
 
     stage('Build Docker Image') {
       when {
