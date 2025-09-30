@@ -158,6 +158,7 @@ pipeline {
               --cov=app \
               --cov-report=xml:coverage.xml \
               --cov-report=term \
+              --cov-report=html
               -v \
               --junitxml=test-results/unit-tests.xml
           """
@@ -190,7 +191,7 @@ pipeline {
         script {
           bat 'docker-compose -f docker-compose.test.yml up -d --build --wait'
           // Ensure DATABASE_URL is set for tests against MySQL
-          withEnv(['DATABASE_URL=mysql+pymysql://appuser:appsecret@localhost:3306/appointment_test_db?charset=utf8mb4']) {
+          withEnv(['TEST_DATABASE_URL=mysql+pymysql://appuser:appsecret@localhost:3306/appointment_test_db?charset=utf8mb4']) {
             bat "${PYTHON} -m pytest tests/integration \
               -v \
               --junitxml=test-results/integration-tests.xml"
