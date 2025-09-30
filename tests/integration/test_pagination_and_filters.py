@@ -1,7 +1,7 @@
 """Integration tests for pagination and filter-like parameters on list endpoints."""
 import pytest
 
-
+@pytest.mark.db
 @pytest.mark.parametrize(
     "skip,limit,expected_status",
     [
@@ -22,7 +22,7 @@ def test_list_pagination_edges(client, create_appointment, skip, limit, expected
     r = client.get("/api/appointments", params={"skip": skip, "limit": limit})
     assert r.status_code == expected_status
 
-
+@pytest.mark.db
 @pytest.mark.parametrize(
     "path",
     [

@@ -14,7 +14,7 @@ USERS = int(os.getenv("PERF_USERS", "200"))
 ROUNDS = int(os.getenv("PERF_ROUNDS", "3"))
 BATCH = int(os.getenv("PERF_BATCH", "1000"))
 
-
+@pytest.mark.db
 @pytest.mark.performance
 @pytest.mark.anyio
 async def test_stress_create_list_delete_cycles(app):

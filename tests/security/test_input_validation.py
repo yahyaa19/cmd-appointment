@@ -9,7 +9,7 @@ Covers:
 from datetime import date, time, timedelta
 import pytest
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.parametrize(
     "overrides,expected_status",
@@ -26,7 +26,7 @@ def test_create_validation_errors(client, valid_appointment_payload, overrides, 
     r = client.post("/api/appointments", json=payload)
     assert r.status_code == expected_status
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.parametrize(
     "field",
@@ -40,7 +40,7 @@ def test_sql_injection_like_inputs_are_not_executed(client, valid_appointment_pa
     # Either accepted as plain text (200/201) or rejected as validation (422).
     assert r.status_code in (201, 422)
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.xfail(reason="Service does not validate end-after-start on update; only create schema enforces it")
 def test_update_rejects_invalid_time_window(client, create_appointment):
@@ -54,7 +54,7 @@ def test_update_rejects_invalid_time_window(client, create_appointment):
     )
     assert r.status_code == 422
 
-
+@pytest.mark.db
 @pytest.mark.security
 def test_update_status_invalid_transition(client, create_appointment):
     created = create_appointment()

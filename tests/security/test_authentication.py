@@ -6,7 +6,7 @@ probing endpoints for resilience to missing/invalid headers.
 """
 import pytest
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.parametrize("endpoint", [
     ("GET", "/api/appointments"),
@@ -29,7 +29,7 @@ def test_requests_without_auth_headers_are_handled(client, endpoint, valid_appoi
     # Since no auth layer exists, we assert the service does not 401
     assert resp.status_code != 401
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.xfail(reason="Auth not implemented; invalid tokens are not processed")
 def test_invalid_jwt_token_rejected(client, valid_appointment_payload):
@@ -37,7 +37,7 @@ def test_invalid_jwt_token_rejected(client, valid_appointment_payload):
     resp = client.post("/api/appointments", json=valid_appointment_payload, headers=headers)
     assert resp.status_code == 401
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.xfail(reason="Auth not implemented; expired tokens are not processed")
 def test_expired_jwt_token_rejected(client, valid_appointment_payload):

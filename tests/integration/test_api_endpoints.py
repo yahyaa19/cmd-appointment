@@ -1,7 +1,8 @@
 """Integration tests for FastAPI endpoints in `app/api/v1/endpoints/appointments.py`."""
 from datetime import date, time
+import pytest
 
-
+@pytest.mark.db
 def test_root_and_health(client):
     r = client.get("/")
     assert r.status_code == 200
@@ -11,7 +12,7 @@ def test_root_and_health(client):
     assert h.status_code == 200
     assert h.json()["status"] == "healthy"
 
-
+@pytest.mark.db
 def test_crud_and_counts(client, valid_appointment_payload):
     # Create
     print(f"\n🔍 Test - Creating appointment with payload: {valid_appointment_payload}")
@@ -66,6 +67,7 @@ def test_crud_and_counts(client, valid_appointment_payload):
     assert dele.status_code == 200
 
 
+@pytest.mark.db
 def test_available_slots(client, create_appointment):
     # Create an appointment that blocks 10:00-10:30 deterministically
     created = create_appointment(

@@ -14,7 +14,7 @@ from httpx import AsyncClient, ASGITransport
 
 USERS = int(os.getenv("PERF_USERS", "200"))  # Adjust up (e.g., 1000, 5000) via env var
 
-
+@pytest.mark.db
 @pytest.mark.performance
 @pytest.mark.anyio
 async def test_concurrent_creates_and_lists(app):

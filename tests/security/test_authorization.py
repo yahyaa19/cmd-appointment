@@ -6,7 +6,7 @@ We include behavioral checks and xfail markers to document expectations once fea
 import itertools
 import pytest
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.xfail(reason="Authorization (RBAC) not implemented")
 def test_role_based_access_control_enforced(client, valid_appointment_payload):
@@ -19,7 +19,7 @@ def test_role_based_access_control_enforced(client, valid_appointment_payload):
     resp = client.delete(f"/api/appointments/{appt_id}", headers=headers)
     assert resp.status_code == 403
 
-
+@pytest.mark.db
 @pytest.mark.security
 def test_basic_abuse_prevention_no_crash_under_repeated_requests(client, valid_appointment_payload):
     # Rapid requests should not crash the service (rate limit not enforced yet)
@@ -27,7 +27,7 @@ def test_basic_abuse_prevention_no_crash_under_repeated_requests(client, valid_a
         r = client.get("/api/appointments")
         assert r.status_code == 200
 
-
+@pytest.mark.db
 @pytest.mark.security
 @pytest.mark.xfail(reason="Rate limiting not implemented")
 def test_rate_limiting_when_exceeded(client, valid_appointment_payload):

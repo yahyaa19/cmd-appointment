@@ -163,21 +163,30 @@ pipeline {
       }
        steps {
          script {
-          echo 'Starting Dockerized test environment...'
+          echo '--- Running Unit Tests (No Database) ---'
+          // 1. Run all tests NOT marked with 'db'. This is fast and fails first.
+          // Note: The coverage report is started here.
+          bat """
+            ${PYTHON} -m pytest -m "not db" ^
+              -v ^
+              --cov=app ^
+              --cov-report=xml:coverage.xml ^
+              --cov-report=html ^
+              --junitxml=test-results/unit-tests.xml
+          """
+
+          echo '--- Starting Dockerized test environment... ---'
           bat 'docker-compose -f docker-compose.test.yml up -d --build --wait'
 
-          echo 'Running all unit and integration tests...'
-          // The DATABASE_URL for pytest itself is now taken from the stage environment
-           bat """
-            ${PYTHON} -m pytest tests/ \
-               --cov=app \
-               --cov-report=xml:coverage.xml \
-               --cov-report=term \
-               -v \
-              --junitxml=test-results/all-tests.xml
-              --ignore=tests/performance \
-              --ignore=tests/security
-           """
+          echo '--- Running Database-Dependent Tests ---'
+          // 2. The unit tests passed, so now run the slower DB tests.
+          // We use 'cov-append' to add to the existing coverage report.
+          bat """
+            ${PYTHON} -m pytest -m "db" ^
+              -v ^
+              --cov=app --cov-append ^
+              --junitxml=test-results/db-tests.xml
+          """
          }
        }
        post {

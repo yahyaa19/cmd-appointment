@@ -6,8 +6,9 @@ from sqlmodel import Session
 from app.data.models.base import create_db_and_tables
 from app.data.repositories.appointment_repository import AppointmentRepository
 from app.data.models.appointment import Appointment
+import pytest
 
-
+@pytest.mark.db
 def test_db_create_and_query(db_session: Session):
     # SQLModel tables are created in conftest; ensure basic CRUD works
     repo = AppointmentRepository(db_session)
