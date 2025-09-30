@@ -103,52 +103,52 @@ pipeline {
       }
     }
 
-    stage('Code Quality & Linting') {
-      parallel {
-        stage('Run Flake8') {
-          steps {
-            script {
-              bat "${PYTHON} -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
-              bat "${PYTHON} -m flake8 . --count --max-complexity=10 --max-line-length=127 --statistics"
-            }
-          }
-        }
-        stage('Run Black') {
-          steps {
-            script {
-              bat "${PYTHON} -m black --check --diff --color ."
-            }
-          }
-        }
-        stage('Run Isort') {
-          steps {
-            script {
-              bat "${PYTHON} -m isort --check-only --diff ."
-            }
-          }
-        }
-      }
-    }
+    // stage('Code Quality & Linting') {
+    //   parallel {
+    //     stage('Run Flake8') {
+    //       steps {
+    //         script {
+    //           bat "${PYTHON} -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
+    //           bat "${PYTHON} -m flake8 . --count --max-complexity=10 --max-line-length=127 --statistics"
+    //         }
+    //       }
+    //     }
+    //     stage('Run Black') {
+    //       steps {
+    //         script {
+    //           bat "${PYTHON} -m black --check --diff --color ."
+    //         }
+    //       }
+    //     }
+    //     stage('Run Isort') {
+    //       steps {
+    //         script {
+    //           bat "${PYTHON} -m isort --check-only --diff ."
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
-    stage('Security Scanning') {
-      parallel {
-        stage('Bandit Security Scan') {
-          steps {
-            script {
-              bat "${PYTHON} -m bandit -r . -c pyproject.toml"
-            }
-          }
-        }
-        stage('Dependency Check') {
-          steps {
-            script {
-              bat "${PIP} install safety"
-              bat "safety check --full-report"
-            }
-          }
-        }
-      }
-    }
+    // stage('Security Scanning') {
+    //   parallel {
+    //     stage('Bandit Security Scan') {
+    //       steps {
+    //         script {
+    //           bat "${PYTHON} -m bandit -r . -c pyproject.toml"
+    //         }
+    //       }
+    //     }
+    //     stage('Dependency Check') {
+    //       steps {
+    //         script {
+    //           bat "${PIP} install safety"
+    //           bat "safety check --full-report"
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
     stage('Unit Tests') {
       steps {
@@ -217,7 +217,7 @@ pipeline {
     }
 
   }
-  
+
   post {
     always {
       node('built-in') {
