@@ -150,60 +150,82 @@ pipeline {
     //   }
     // }
 
-    stage('Testing') {
-       environment {
-         // These variables are picked up by docker-compose.test.yml to configure the MySQL test database.
-         // Replace 'rootsecret', 'appuser', 'appsecret' with values from your .env or Jenkins credentials if you changed them.
-         MYSQL_ROOT_PASSWORD = 'rootsecret'
-         MYSQL_DATABASE = 'appointment_test_db' // Ensure this matches the DB name in docker-compose.test.yml
-         MYSQL_USER = 'appuser'
-         MYSQL_PASSWORD = 'appsecret'
-        // The DATABASE_URL for tests connecting from inside the 'test' service to the 'mysql' service
-        TEST_DATABASE_URL = 'mysql+pymysql://appuser:appsecret@mysql:3306/appointment_test_db?charset=utf8mb4'
-      }
-       steps {
-         script {
-          echo '--- Running Unit Tests (No Database) ---'
-          // 1. Run all tests NOT marked with 'db'. This is fast and fails first.
-          // Note: The coverage report is started here.
+    stage('Unit Tests') {
+      steps {
+        script {
+          echo '--- Running Unit Tests (No Database Required) ---'
+          // Run only unit tests from the tests/unit/ folder
+          // These are fast tests that don't require external dependencies
           bat """
-            ${PYTHON} -m pytest -m "not db" ^
+            ${PYTHON} -m pytest tests/unit/ ^
               -v ^
               --cov=app ^
-              --cov-report=xml:coverage.xml ^
-              --cov-report=html ^
+              --cov-report=xml:coverage-unit.xml ^
+              --cov-report=html:htmlcov-unit ^
               --junitxml=test-results/unit-tests.xml
           """
+        }
+      }
+      post {
+        always {
+          // Archive unit test results
+          junit 'test-results/unit-tests.xml'
+          publishHTML(target: [
+            allowMissing: false,
+            alwaysLinkToLastBuild: false,
+            keepAll: true,
+            reportDir: 'htmlcov-unit',
+            reportFiles: 'index.html',
+            reportName: 'Unit Tests Coverage Report'
+          ])
+        }
+      }
+    }
 
-          echo '--- Starting Dockerized test environment... ---'
+    stage('Integration & Other Tests') {
+      environment {
+        // These variables are picked up by docker-compose.test.yml to configure the MySQL test database
+        MYSQL_ROOT_PASSWORD = 'rootsecret'
+        MYSQL_DATABASE = 'appointment_test_db'
+        MYSQL_USER = 'appuser'
+        MYSQL_PASSWORD = 'appsecret'
+        TEST_DATABASE_URL = 'mysql+pymysql://appuser:appsecret@mysql:3306/appointment_test_db?charset=utf8mb4'
+      }
+      steps {
+        script {
+          echo '--- Starting Dockerized test environment for integration tests... ---'
           bat 'docker-compose -f docker-compose.test.yml up -d --build --wait'
 
-          echo '--- Running Database-Dependent Tests ---'
-          // 2. The unit tests passed, so now run the slower DB tests.
-          // We use 'cov-append' to add to the existing coverage report.
+          echo '--- Running Integration, E2E, Performance, and Security Tests ---'
+          // Run tests from all other folders (integration/, e2e/, performance/, security/)
           bat """
-            ${PYTHON} -m pytest -m "db" ^
+            ${PYTHON} -m pytest tests/integration/ tests/e2e/ tests/performance/ tests/security/ ^
               -v ^
               --cov=app --cov-append ^
-              --junitxml=test-results/db-tests.xml
+              --cov-report=xml:coverage-integration.xml ^
+              --cov-report=html:htmlcov-integration ^
+              --junitxml=test-results/integration-tests.xml
           """
-         }
-       }
-       post {
-         always {
+        }
+      }
+      post {
+        always {
+          // Clean up Docker environment
           bat 'docker-compose -f docker-compose.test.yml down --volumes --remove-orphans'
-           junit 'test-results/all-tests.xml'
-           publishHTML(target: [
-             allowMissing: false,
-             alwaysLinkToLastBuild: false,
-             keepAll: true,
-             reportDir: 'htmlcov',
-             reportFiles: 'index.html',
-             reportName: 'Combined Coverage Report'
-           ])
-         }
-       }
-     }
+          
+          // Archive integration test results
+          junit 'test-results/integration-tests.xml'
+          publishHTML(target: [
+            allowMissing: false,
+            alwaysLinkToLastBuild: false,
+            keepAll: true,
+            reportDir: 'htmlcov-integration',
+            reportFiles: 'index.html',
+            reportName: 'Integration Tests Coverage Report'
+          ])
+        }
+      }
+    }
 
     stage('Build Docker Image') {
       when {
