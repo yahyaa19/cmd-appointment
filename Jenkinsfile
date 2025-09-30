@@ -179,6 +179,13 @@ pipeline {
     }
 
     stage('Integration Tests') {
+      environment {
+        MYSQL_ROOT_PASSWORD = 'rootsecret'
+        MYSQL_DATABASE = 'appointment_test_db'
+        MYSQL_USER = 'appuser'
+        MYSQL_PASSWORD = 'appsecret'
+        TEST_DATABASE_URL = 'mysql+pymysql://appuser:appsecret@mysql:3306/appointment_test_db?charset=utf8mb4'
+      }
       steps {
         script {
           bat 'docker-compose -f docker-compose.test.yml up -d --build --wait'
