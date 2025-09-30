@@ -154,6 +154,10 @@ pipeline {
       steps {
         script {
           echo '--- Running Unit Tests (No Database Required) ---'
+          
+          // Create test results directory
+          bat 'if not exist "test-results" mkdir "test-results"'
+          
           // Run only unit tests from the tests/unit/ folder
           // These are fast tests that don't require external dependencies
           bat """
@@ -194,11 +198,16 @@ pipeline {
       steps {
         script {
           echo '--- Starting Dockerized test environment for integration tests... ---'
-          bat 'docker-compose -f docker-compose.test.yml up -d --build --wait'
+          bat 'docker-compose -f docker-compose.test.yml up mysql -d --wait'
+
+          // Wait a bit more for MySQL to be fully ready
+          sleep 10
 
           echo '--- Running Integration, E2E, Performance, and Security Tests ---'
           // Run tests from all other folders (integration/, e2e/, performance/, security/)
+          // These tests will connect to the MySQL container on port 3308
           bat """
+            set TEST_DATABASE_URL=mysql+pymysql://%MYSQL_USER%:%MYSQL_PASSWORD%@localhost:3308/appointment_test_db?charset=utf8mb4
             ${PYTHON} -m pytest tests/integration/ tests/e2e/ tests/performance/ tests/security/ ^
               -v ^
               --cov=app --cov-append ^
