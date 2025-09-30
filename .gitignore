@@ -59,4 +59,4 @@ local_settings.py
 " > .gitignore
 
 .hypothesis/
-.reports/
+reports/test_report.html
